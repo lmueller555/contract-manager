@@ -31,6 +31,13 @@ Heroku uses the included `Procfile` and the `web` process binds to the platform-
 npm test
 ```
 
+## Property matching roadmap
+
+See [the property matching scraper plan](docs/PROPERTY_MATCHING_SCRAPER.md) for
+the source-adapter reconnaissance checklist, normalized data contracts,
+evidence-backed scoring design, compliance gates, and staged delivery plan for
+matching extracted requirements to commercial listings.
+
 ## AI extraction
 
 The scan route accepts PDFs up to 100 MB and sends the complete document to the OpenAI Responses API using the `gpt-5-mini` model. A strict JSON schema captures solicitation metadata, requested ABOA area, parking, lease term, area boundaries, TI and BSAC allowances, building/property criteria, a requirements summary, and extraction confidence. The model is instructed to report missing values rather than invent them.
