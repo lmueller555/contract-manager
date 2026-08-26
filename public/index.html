@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Scan lease solicitations and organize property requirements.">
+  <title>LeaseLens · Document intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="LeaseLens home"><span class="brand-mark">L</span><span>LeaseLens</span></a>
+    <div class="status"><span></span>Document intelligence online</div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="eyebrow">Property requirement extraction</div>
+      <h1>Turn a lease PDF into<br><em>clear property criteria.</em></h1>
+      <p>Upload a searchable GSA solicitation. LeaseLens identifies the statement of requirements, space needs, location boundaries, and building criteria in seconds.</p>
+
+      <form id="upload-form" class="upload-card">
+        <label class="dropzone" id="dropzone" for="document">
+          <input id="document" name="document" type="file" accept="application/pdf,.pdf" required>
+          <span class="upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 14v5h14v-5"/></svg></span>
+          <strong id="file-label">Drop your lease PDF here</strong>
+          <small>or click to browse · searchable PDF · 20 MB max</small>
+        </label>
+        <button id="scan-button" type="submit"><span>Scan document</span><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
+        <div class="progress" id="progress" hidden><span></span><p>Reading the statement of requirements…</p></div>
+        <p class="error" id="error" role="alert" hidden></p>
+      </form>
+      <div class="trust-row"><span>PDF text extraction</span><span>Structured requirements</span><span>No document storage</span></div>
+    </section>
+
+    <section class="dashboard" id="dashboard" hidden>
+      <div class="dashboard-head">
+        <div><div class="eyebrow">Extraction complete</div><h2>Requirements dashboard</h2></div>
+        <button class="secondary" id="scan-another">Scan another PDF</button>
+      </div>
+
+      <article class="document-banner">
+        <div class="pdf-badge">PDF</div>
+        <div><span id="doc-name"></span><strong id="solicitation"></strong></div>
+        <div class="confidence"><span></span><div>Extraction confidence<strong id="confidence"></strong></div></div>
+      </article>
+
+      <div class="metrics">
+        <article><span>ABOA square feet</span><strong id="square-feet">—</strong><small>Requested space</small></article>
+        <article><span>Lease term</span><strong id="lease-term">—</strong><small>Including firm term</small></article>
+        <article><span>Reserved parking</span><strong id="parking">—</strong><small>Spaces required</small></article>
+        <article><span>Offer deadline</span><strong id="due-date">—</strong><small>Verify in source PDF</small></article>
+      </div>
+
+      <div class="dashboard-grid">
+        <article class="panel criteria-panel">
+          <div class="panel-title"><div><span class="panel-icon">✓</span><h3>Building & property criteria</h3></div><span id="criteria-count"></span></div>
+          <ul id="criteria-list"></ul>
+        </article>
+
+        <div class="side-stack">
+          <article class="panel">
+            <div class="panel-title"><div><span class="panel-icon">⌖</span><h3>Area of consideration</h3></div></div>
+            <dl class="boundaries">
+              <div><dt>North</dt><dd id="north"></dd></div><div><dt>South</dt><dd id="south"></dd></div>
+              <div><dt>East</dt><dd id="east"></dd></div><div><dt>West</dt><dd id="west"></dd></div>
+            </dl>
+          </article>
+          <article class="panel allowances">
+            <div class="panel-title"><div><span class="panel-icon">$</span><h3>Build-out allowances</h3></div></div>
+            <div><span>Tenant improvements</span><strong id="ti"></strong><small>per ABOA SF</small></div>
+            <div><span>Security / BSAC</span><strong id="bsac"></strong><small>per ABOA SF</small></div>
+          </article>
+        </div>
+      </div>
+
+      <details class="source-text"><summary>Review extracted statement of requirements <span>View source text</span></summary><p id="statement"></p></details>
+      <p class="disclaimer">LeaseLens organizes extracted text for review. Always verify requirements against the source solicitation before making leasing decisions.</p>
+    </section>
+  </main>
+  <footer><span>LeaseLens</span><p>Built for faster, more confident site qualification.</p></footer>
+  <script src="/app.js"></script>
+</body>
+</html>
