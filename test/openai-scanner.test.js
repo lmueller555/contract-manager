@@ -19,7 +19,7 @@ const analysis = {
   confidence: 'High'
 };
 
-test('sends the PDF directly to GPT-5.1 mini and returns dashboard data', async () => {
+test('sends the PDF directly to GPT-5 mini and returns dashboard data', async () => {
   let request;
   const fetchImpl = async (url, options) => {
     request = { url, options, body: JSON.parse(options.body) };
@@ -36,7 +36,7 @@ test('sends the PDF directly to GPT-5.1 mini and returns dashboard data', async 
   assert.equal(request.url, 'https://api.openai.com/v1/responses');
   assert.equal(request.options.headers.Authorization, 'Bearer test-key');
   assert.equal(request.body.model, MODEL);
-  assert.equal(MODEL, 'gpt-5.1-mini');
+  assert.equal(MODEL, 'gpt-5-mini');
   assert.equal(request.body.text.format.type, 'json_schema');
   assert.equal(request.body.text.format.strict, true);
   const file = request.body.input[0].content.find(item => item.type === 'input_file');
@@ -68,5 +68,25 @@ test('surfaces an OpenAI API error without accepting an empty result', async () 
   await assert.rejects(
     scanPdf(Buffer.from('pdf'), {}, { apiKey: 'test-key', fetchImpl }),
     error => error.message === 'Rate limit reached.' && error.status === 429
+  );
+});
+
+test('preserves OpenAI error details for actionable HTTP responses and logs', async () => {
+  const fetchImpl = async () => ({
+    ok: false,
+    status: 400,
+    json: async () => ({ error: {
+      message: 'Invalid PDF file.',
+      code: 'invalid_file',
+      type: 'invalid_request_error'
+    } })
+  });
+
+  await assert.rejects(
+    scanPdf(Buffer.from('pdf'), {}, { apiKey: 'test-key', fetchImpl }),
+    error => error.message === 'Invalid PDF file.' &&
+      error.status === 400 &&
+      error.code === 'invalid_file' &&
+      error.type === 'invalid_request_error'
   );
 });
