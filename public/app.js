@@ -58,6 +58,31 @@ function showDashboard(data) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+async function readJson(response) {
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    throw new Error(response.ok
+      ? 'The server returned an unexpected response.'
+      : `The scan service returned an error (HTTP ${response.status}). Please try again.`);
+  }
+  return response.json();
+}
+
+const wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
+
+async function waitForScan(id) {
+  const deadline = Date.now() + 5 * 60 * 1000;
+  while (Date.now() < deadline) {
+    await wait(1500);
+    const response = await fetch(`/api/documents/scan/${encodeURIComponent(id)}`);
+    const scan = await readJson(response);
+    if (!response.ok) throw new Error(scan.error || 'The document scan could not be retrieved.');
+    if (scan.status === 'complete') return scan.result;
+    if (scan.status === 'failed') throw new Error(scan.error || 'The document could not be scanned.');
+  }
+  throw new Error('The document scan is taking longer than expected. Please try again.');
+}
+
 form.addEventListener('submit', async event => {
   event.preventDefault();
   if (!input.files[0]) return;
@@ -65,9 +90,10 @@ form.addEventListener('submit', async event => {
   try {
     const body = new FormData(); body.append('document', input.files[0]);
     const response = await fetch('/api/documents/scan', { method: 'POST', body });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || 'The document could not be scanned.');
-    showDashboard(result);
+    const scan = await readJson(response);
+    if (!response.ok) throw new Error(scan.error || 'The document could not be scanned.');
+    if (!scan.id) throw new Error('The scan service returned an invalid response.');
+    showDashboard(await waitForScan(scan.id));
   } catch (error) {
     errorBox.textContent = error.message; errorBox.hidden = false;
   } finally { progress.hidden = true; button.disabled = false; }
