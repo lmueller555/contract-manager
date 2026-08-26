@@ -1,0 +1,18 @@
+{
+  "name": "lease-lens",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Extract building and property requirements from GSA lease solicitations.",
+  "engines": {
+    "node": "20.x"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.2",
+    "pdf-parse": "^1.1.1"
+  }
+}
