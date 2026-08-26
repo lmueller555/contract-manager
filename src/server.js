@@ -3,8 +3,7 @@
 const path = require('path');
 const express = require('express');
 const multer = require('multer');
-const pdf = require('pdf-parse');
-const { parseRequirements } = require('./parser');
+const { scanPdf } = require('./openai-scanner');
 
 const app = express();
 const upload = multer({
@@ -23,17 +22,16 @@ app.post('/api/documents/scan', upload.single('document'), async (request, respo
   if (!request.file) return response.status(400).json({ error: 'Choose a PDF document to scan.' });
 
   try {
-    const extracted = await pdf(request.file.buffer);
-    if (!extracted.text || extracted.text.trim().length < 50) {
-      return response.status(422).json({ error: 'This PDF has no readable text layer. Please upload a searchable PDF.' });
-    }
-    return response.json(parseRequirements(extracted.text, {
-      fileName: request.file.originalname,
-      pages: extracted.numpages
-    }));
+    return response.json(await scanPdf(request.file.buffer, { fileName: request.file.originalname }));
   } catch (error) {
     console.error('PDF scan failed:', error.message);
-    return response.status(422).json({ error: 'We could not read that PDF. Confirm that it is valid and not password protected.' });
+    if (error.message === 'OPENAI_API_KEY is not configured.') {
+      return response.status(503).json({ error: 'Document intelligence is not configured. Set OPENAI_API_KEY and try again.' });
+    }
+    if (error.name === 'AbortError') {
+      return response.status(504).json({ error: 'The AI scan timed out. Please try again.' });
+    }
+    return response.status(502).json({ error: 'The AI could not scan that PDF. Confirm it is valid and try again.' });
   }
 });
 

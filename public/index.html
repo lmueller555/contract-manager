@@ -20,20 +20,20 @@
     <section class="hero">
       <div class="eyebrow">Property requirement extraction</div>
       <h1>Turn a lease PDF into<br><em>clear property criteria.</em></h1>
-      <p>Upload a searchable GSA solicitation. LeaseLens identifies the statement of requirements, space needs, location boundaries, and building criteria in seconds.</p>
+      <p>Upload a GSA solicitation. GPT-5.1 mini reads the complete PDF and organizes its space needs, location boundaries, and building criteria in seconds.</p>
 
       <form id="upload-form" class="upload-card">
         <label class="dropzone" id="dropzone" for="document">
           <input id="document" name="document" type="file" accept="application/pdf,.pdf" required>
           <span class="upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 14v5h14v-5"/></svg></span>
           <strong id="file-label">Drop your lease PDF here</strong>
-          <small>or click to browse · searchable PDF · 20 MB max</small>
+          <small>or click to browse · PDF · 20 MB max</small>
         </label>
         <button id="scan-button" type="submit"><span>Scan document</span><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
-        <div class="progress" id="progress" hidden><span></span><p>Reading the statement of requirements…</p></div>
+        <div class="progress" id="progress" hidden><span></span><p>GPT-5.1 mini is reviewing the complete document…</p></div>
         <p class="error" id="error" role="alert" hidden></p>
       </form>
-      <div class="trust-row"><span>PDF text extraction</span><span>Structured requirements</span><span>No document storage</span></div>
+      <div class="trust-row"><span>AI document review</span><span>Structured requirements</span><span>No document storage</span></div>
     </section>
 
     <section class="dashboard" id="dashboard" hidden>
@@ -77,7 +77,7 @@
         </div>
       </div>
 
-      <details class="source-text"><summary>Review extracted statement of requirements <span>View source text</span></summary><p id="statement"></p></details>
+      <details class="source-text"><summary>Review AI requirements summary <span>View summary</span></summary><p id="statement"></p></details>
       <p class="disclaimer">LeaseLens organizes extracted text for review. Always verify requirements against the source solicitation before making leasing decisions.</p>
     </section>
   </main>

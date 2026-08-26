@@ -1,20 +1,22 @@
 # LeaseLens
 
-LeaseLens is a Heroku-ready Node application that accepts searchable GSA lease-solicitation PDFs, extracts their text in memory, identifies the statement of requirements, and presents key building and property criteria in a reviewable dashboard.
+LeaseLens is a Heroku-ready Node application that sends GSA lease-solicitation PDFs to GPT-5.1 mini, gathers the document's requirements into a strict structured response, and presents key building and property criteria in a reviewable dashboard.
 
 ## Run locally
 
 ```bash
 npm install
+export OPENAI_API_KEY="your-api-key"
 npm start
 ```
 
-Open `http://localhost:3000`, then upload a searchable PDF. Uploaded documents are processed in memory and are not written to disk.
+Open `http://localhost:3000`, then upload a PDF. Uploaded documents are processed in memory, sent directly to the OpenAI Responses API for analysis, and are not written to disk by LeaseLens.
 
 ## Deploy to Heroku
 
 ```bash
 heroku create your-app-name
+heroku config:set OPENAI_API_KEY="your-api-key"
 git push heroku main
 heroku open
 ```
@@ -27,8 +29,8 @@ Heroku uses the included `Procfile` and the `web` process binds to the platform-
 npm test
 ```
 
-## Current extraction scope
+## AI extraction
 
-The deterministic parser recognizes common GSA RLP language for solicitation metadata, requested ABOA area, parking, lease term, area boundaries, TI and BSAC allowances, and frequently used building/property criteria. It reports missing values rather than inventing them and exposes the extracted statement for human verification.
+The scan route sends the complete PDF to the OpenAI Responses API using the `gpt-5.1-mini` model. A strict JSON schema captures solicitation metadata, requested ABOA area, parking, lease term, area boundaries, TI and BSAC allowances, building/property criteria, a requirements summary, and extraction confidence. The model is instructed to report missing values rather than invent them.
 
-The PDF must include a readable text layer. Image-only scans require an OCR service before extraction and currently return a clear validation message.
+Because the model receives the PDF itself rather than locally extracted text, it can review both extracted text and page imagery. Always verify the generated dashboard against the source solicitation before making leasing decisions.
