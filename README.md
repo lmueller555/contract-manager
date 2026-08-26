@@ -12,6 +12,8 @@ npm start
 
 Open `http://localhost:3000`, then upload a PDF. Uploaded documents are processed in memory, sent directly to the OpenAI Responses API for analysis, and are not written to disk by LeaseLens.
 
+Scans run as asynchronous jobs. The upload endpoint responds immediately and the browser polls for the result, so a long PDF analysis is not interrupted by a platform HTTP request timeout.
+
 ## Deploy to Heroku
 
 ```bash
