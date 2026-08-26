@@ -4,6 +4,8 @@ const path = require('path');
 const express = require('express');
 const multer = require('multer');
 const { scanPdf } = require('./openai-scanner');
+const { CrexiSource } = require('./crexi-source');
+const { evaluateProperty, profileFromScan } = require('./property-matcher');
 
 const app = express();
 const MAX_DOCUMENT_SIZE_MB = 100;
@@ -81,6 +83,21 @@ app.get('/api/documents/scan/:id', (request, response) => {
   const scan = scans.get(request.params.id);
   if (!scan) return response.status(404).json({ error: 'This scan was not found or has expired.' });
   return response.json(publicScan(scan));
+});
+
+app.post('/api/documents/scan/:id/crexi-matches', express.json(), async (request, response) => {
+  const scan = scans.get(request.params.id);
+  if (!scan || scan.status !== 'complete') return response.status(404).json({ error: 'A completed scan is required before matching properties.' });
+  try {
+    const profile = profileFromScan(scan.result);
+    const properties = await new CrexiSource().find(profile);
+    const matches = properties.map(property => evaluateProperty(profile, property))
+      .sort((a, b) => b.score - a.score || b.coverage - a.coverage).slice(0, 10);
+    return response.json({ source: 'crexi', observedAt: new Date().toISOString(), profile, matches });
+  } catch (error) {
+    console.error('Crexi matching failed:', { message: error.message });
+    return response.status(502).json({ error: error.message });
+  }
 });
 
 app.use((error, _request, response, _next) => {
