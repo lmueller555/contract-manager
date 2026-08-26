@@ -38,6 +38,15 @@ the source-adapter reconnaissance checklist, normalized data contracts,
 evidence-backed scoring design, compliance gates, and staged delivery plan for
 matching extracted requirements to commercial listings.
 
+### Crexi matching
+
+After a scan, LeaseLens can collect public Crexi listing pages from an approved
+search URL, normalize their JSON-LD facts with evidence, and rank the ten best
+matches. Configure `CREXI_SEARCH_URL_TEMPLATE` with the search URL validated for
+your authorized workflow; use `{location}` where the extracted market belongs.
+The adapter stops on access-control and rate-limit responses and does not use
+private endpoints, authentication bypasses, or CAPTCHA workarounds.
+
 ## AI extraction
 
 The scan route accepts PDFs up to 100 MB and sends the complete document to the OpenAI Responses API using the `gpt-5-mini` model. A strict JSON schema captures solicitation metadata, requested ABOA area, parking, lease term, area boundaries, TI and BSAC allowances, building/property criteria, a requirements summary, and extraction confidence. The model is instructed to report missing values rather than invent them.
