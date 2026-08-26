@@ -1,7 +1,9 @@
 'use strict';
 
 const OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses';
-const MODEL = 'gpt-5.1-mini';
+// gpt-5.1-mini is not an OpenAI API model. Using it caused every request to be
+// rejected before the PDF was read.
+const MODEL = 'gpt-5-mini';
 const NOT_SPECIFIED = 'Not specified';
 
 const stringField = { type: 'string' };
@@ -123,6 +125,8 @@ async function scanPdf(buffer, metadata = {}, options = {}) {
     const details = await response.json().catch(() => ({}));
     const error = new Error(details.error?.message || `OpenAI returned HTTP ${response.status}.`);
     error.status = response.status;
+    error.code = details.error?.code;
+    error.type = details.error?.type;
     throw error;
   }
 
