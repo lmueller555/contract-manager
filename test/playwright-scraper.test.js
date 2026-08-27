@@ -8,8 +8,10 @@ const childProcess = require('node:child_process');
 
 test('Python scraper bridge exchanges a JSON request and response', async t => {
   const original = childProcess.spawn;
+  let executable;
   // Load after replacing spawn because the bridge destructures it at import time.
-  childProcess.spawn = () => {
+  childProcess.spawn = command => {
+    executable = command;
     const child = new EventEmitter();
     child.stdout = new PassThrough(); child.stderr = new PassThrough(); child.stdin = new PassThrough();
     let request = '';
@@ -25,5 +27,6 @@ test('Python scraper bridge exchanges a JSON request and response', async t => {
   delete require.cache[require.resolve('../src/playwright-scraper')];
   const { scrapeWithPlaywright } = require('../src/playwright-scraper');
   const result = await scrapeWithPlaywright({ url: 'https://example.com', maxPages: 2 });
+  assert.equal(executable, 'python');
   assert.equal(result.pages[0].url, 'https://example.com');
 });

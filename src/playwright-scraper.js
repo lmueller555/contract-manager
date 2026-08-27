@@ -4,7 +4,10 @@ const { spawn } = require('node:child_process');
 const path = require('node:path');
 
 function scrapeWithPlaywright(request, options = {}) {
-  const python = options.pythonExecutable || process.env.PYTHON_EXECUTABLE || 'python3';
+  // The Heroku Python buildpack exposes the runtime as `python` (the same
+  // executable used by bin/post_compile); `python3` is not guaranteed to be
+  // present on the runtime PATH.
+  const python = options.pythonExecutable || process.env.PYTHON_EXECUTABLE || 'python';
   const script = options.script || path.join(__dirname, 'playwright_scraper.py');
   return new Promise((resolve, reject) => {
     const child = spawn(python, [script], { stdio: ['pipe', 'pipe', 'pipe'] });
