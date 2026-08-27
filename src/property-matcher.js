@@ -1,5 +1,7 @@
 'use strict';
 
+const { formatSearchLocation } = require('./search-location');
+
 function numberFrom(value) {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   const match = String(value || '').replace(/,/g, '').match(/[\d.]+/);
@@ -11,7 +13,7 @@ function profileFromScan(scan) {
   const parking = numberFrom(scan.space?.parkingSpaces);
   return {
     transaction: 'lease',
-    location: scan.document?.location === 'Not specified' ? '' : scan.document?.location || '',
+    location: formatSearchLocation(scan.document?.location),
     geography: { boundaryText: scan.boundaries || {}, required: true },
     area: requestedArea ? { minSqFt: requestedArea, maxSqFt: requestedArea, basis: 'ABOA' } : {},
     parking: parking ? { minimumSpaces: parking } : {},
@@ -59,4 +61,4 @@ function evaluateProperty(profile, property) {
   };
 }
 
-module.exports = { evaluateProperty, numberFrom, profileFromScan };
+module.exports = { evaluateProperty, formatSearchLocation, numberFrom, profileFromScan };

@@ -40,19 +40,25 @@ matching extracted requirements to commercial listings.
 
 ### Crexi matching
 
-After a scan, LeaseLens translates supported requirements (transaction type,
-property type, cap rate, sort, and page) into Crexi's public search URL. It reads
+After a scan, LeaseLens saves a cleaned `document.searchLocation` (for example,
+`Rosenberg, TX`) alongside the extracted document location. When matching is
+requested, a Playwright browser opens the Crexi home page, finds the accessible
+location control at `#filter-location-input`, enters that search location, and
+submits it. It then reads
 structured result-card data, applies known price, cap-rate, area, status filters,
 and only then requests detail pages for the surviving candidates. Detail JSON-LD
 and semantic label/value fields are normalized into physical, lease, and
 investment facts; unmodeled values are retained in `rawFields`.
 
-`CREXI_SEARCH_URL_TEMPLATE` remains available for an approved location-specific
-search URL; use `{location}` where the extracted market belongs. Without it, the
-adapter uses `/properties` for sale and `/lease/properties` for lease. The
-adapter uses public HTML only, stops on access-control and rate-limit responses,
-and does not call private `/api` endpoints or attempt authentication/CAPTCHA
-bypasses.
+`CREXI_SEARCH_URL_TEMPLATE` remains available as a test/integration override
+for an approved location-specific search URL; use `{location}` where the
+extracted market belongs. The adapter uses public HTML only, stops on
+access-control and rate-limit responses, and does not call private `/api`
+endpoints or attempt authentication/CAPTCHA bypasses.
+
+Install Playwright's Chromium browser in each runtime (`npx playwright install
+chromium`). Crexi matching deliberately refuses to run an unbounded search when
+the document has no extracted location.
 
 ## AI extraction
 

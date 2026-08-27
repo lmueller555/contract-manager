@@ -1,5 +1,7 @@
 'use strict';
 
+const { formatSearchLocation } = require('./search-location');
+
 const OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses';
 // gpt-5.1-mini is not an OpenAI API model. Using it caused every request to be
 // rejected before the PDF was read.
@@ -63,6 +65,7 @@ Rules:
 - requirements must be a deduplicated list of all material building, property, access, location, security, loading, elevator, adjacency, transit, amenity, floor/contiguity, and special-use requirements. Each item must be understandable on its own. Do not include generic legal boilerplate.
 - statement must be a concise plain-text summary of the requirements, not a transcription. Mention material constraints that do not fit another field.
 - confidence is High only when the relevant pages are legible and values are explicit; Medium when the useful extraction is partial; Review needed when the document is unclear, contradictory, or has few identifiable requirements.
+- document.location must be a concise, search-ready place name in the form "City, ST" or "ZIP code" when the document states one. Do not include labels such as "delineated area," boundary descriptions, or explanatory prose in this field.
 - tenantImprovementAllowance and securityAllowance should contain only the numeric amount when one is specified per ABOA SF, because the dashboard supplies the dollar sign and unit.`;
 
 function outputText(response) {
@@ -143,6 +146,7 @@ async function scanPdf(buffer, metadata = {}, options = {}) {
 
   result.document.fileName = metadata.fileName || 'Uploaded document';
   result.document.pages = metadata.pages || null;
+  result.document.searchLocation = formatSearchLocation(result.document.location);
   return result;
 }
 
