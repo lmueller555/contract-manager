@@ -56,9 +56,12 @@ extracted market belongs. The adapter uses public HTML only, stops on
 access-control and rate-limit responses, and does not call private `/api`
 endpoints or attempt authentication/CAPTCHA bypasses.
 
-Install Playwright's Chromium browser in each runtime (`npx playwright install
-chromium`). Crexi matching deliberately refuses to run an unbounded search when
-the document has no extracted location.
+`npm install` installs Playwright's Chromium browser inside the application
+artifact (`PLAYWRIGHT_BROWSERS_PATH=0`), so it is available in deployed runtimes
+whose build-time home cache is not preserved. If dependencies are installed with
+scripts disabled, run `PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install chromium`
+before starting the server. Crexi matching deliberately refuses to run an
+unbounded search when the document has no extracted location.
 
 ## AI extraction
 

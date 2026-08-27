@@ -219,6 +219,9 @@ class CrexiSource {
 }
 
 async function defaultBrowserFactory() {
+  // Keep the browser in node_modules so deployment platforms include it in the
+  // application artifact rather than dropping a build-time user cache.
+  process.env.PLAYWRIGHT_BROWSERS_PATH ||= '0';
   let chromium;
   try {
     ({ chromium } = require('playwright'));
