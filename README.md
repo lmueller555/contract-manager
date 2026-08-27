@@ -40,12 +40,19 @@ matching extracted requirements to commercial listings.
 
 ### Crexi matching
 
-After a scan, LeaseLens can collect public Crexi listing pages from an approved
-search URL, normalize their JSON-LD facts with evidence, and rank the ten best
-matches. Configure `CREXI_SEARCH_URL_TEMPLATE` with the search URL validated for
-your authorized workflow; use `{location}` where the extracted market belongs.
-The adapter stops on access-control and rate-limit responses and does not use
-private endpoints, authentication bypasses, or CAPTCHA workarounds.
+After a scan, LeaseLens translates supported requirements (transaction type,
+property type, cap rate, sort, and page) into Crexi's public search URL. It reads
+structured result-card data, applies known price, cap-rate, area, status filters,
+and only then requests detail pages for the surviving candidates. Detail JSON-LD
+and semantic label/value fields are normalized into physical, lease, and
+investment facts; unmodeled values are retained in `rawFields`.
+
+`CREXI_SEARCH_URL_TEMPLATE` remains available for an approved location-specific
+search URL; use `{location}` where the extracted market belongs. Without it, the
+adapter uses `/properties` for sale and `/lease/properties` for lease. The
+adapter uses public HTML only, stops on access-control and rate-limit responses,
+and does not call private `/api` endpoints or attempt authentication/CAPTCHA
+bypasses.
 
 ## AI extraction
 
