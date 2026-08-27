@@ -1,6 +1,7 @@
 'use strict';
 
 const BASE_URL = 'https://www.crexi.com';
+const LOCATION_SELECTOR = '#filter-location-input';
 
 function decode(value = '') {
   return String(value).replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#x27;|&#39;/g, "'")
@@ -139,6 +140,7 @@ class CrexiSource {
   constructor(options = {}) {
     this.fetch = options.fetchImpl || globalThis.fetch; this.searchUrlTemplate = options.searchUrlTemplate || process.env.CREXI_SEARCH_URL_TEMPLATE;
     this.maxListings = options.maxListings || 25; this.delayMs = options.delayMs ?? 250;
+    this.browserFactory = options.browserFactory || defaultBrowserFactory;
   }
 
   async get(url) {
@@ -149,10 +151,29 @@ class CrexiSource {
   }
 
   async search(profile) {
-    const page = await this.get(buildSearchUrl(profile, this.searchUrlTemplate));
+    if (!profile.location) throw new Error('The scanned document does not contain a location to search on Crexi.');
+    const page = this.searchUrlTemplate
+      ? await this.get(buildSearchUrl(profile, this.searchUrlTemplate))
+      : await this.searchWithBrowser(profile.location);
     const summaries = cardSummaries(page.html).map(item => ({ ...item, transaction: profile.transaction || 'lease' }))
       .filter(item => passesHardFilters(item, profile)).slice(0, this.maxListings);
     return { summaries, nextCursor: null, observedAt: page.capturedAt };
+  }
+
+  async searchWithBrowser(location) {
+    const browser = await this.browserFactory();
+    try {
+      const page = await browser.newPage();
+      await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
+      const input = page.locator(LOCATION_SELECTOR);
+      await input.waitFor({ state: 'visible' });
+      await input.fill(location);
+      await input.press('Enter');
+      await page.waitForLoadState('networkidle');
+      return { html: await page.content(), capturedAt: new Date().toISOString(), url: page.url() };
+    } finally {
+      await browser.close();
+    }
   }
 
   async details(summary) {
@@ -197,4 +218,14 @@ class CrexiSource {
   }
 }
 
-module.exports = { CrexiSource, buildSearchUrl, cardSummaries, jsonLd, labeledFields, listingLinks, passesHardFilters };
+async function defaultBrowserFactory() {
+  let chromium;
+  try {
+    ({ chromium } = require('playwright'));
+  } catch {
+    throw new Error('Crexi browser search is unavailable because Playwright is not installed.');
+  }
+  return chromium.launch({ headless: true });
+}
+
+module.exports = { CrexiSource, LOCATION_SELECTOR, buildSearchUrl, cardSummaries, jsonLd, labeledFields, listingLinks, passesHardFilters };

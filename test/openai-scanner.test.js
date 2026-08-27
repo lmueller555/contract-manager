@@ -44,6 +44,7 @@ test('sends the PDF directly to GPT-5 mini and returns dashboard data', async ()
   assert.match(file.file_data, /^data:application\/pdf;base64,/);
   assert.equal(result.document.fileName, 'sample.pdf');
   assert.equal(result.document.pages, null);
+  assert.equal(result.document.searchLocation, 'Rosenberg, TX');
   assert.deepEqual(result.requirements, analysis.requirements);
 });
 
