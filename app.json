@@ -1,0 +1,12 @@
+{
+  "name": "LeaseLens",
+  "description": "Extract property requirements from GSA lease solicitations.",
+  "buildpacks": [
+    {
+      "url": "heroku-community/apt"
+    },
+    {
+      "url": "heroku/nodejs"
+    }
+  ]
+}

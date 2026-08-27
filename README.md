@@ -18,12 +18,13 @@ Scans run as asynchronous jobs. The upload endpoint responds immediately and the
 
 ```bash
 heroku create your-app-name
+heroku buildpacks:add --index 1 heroku-community/apt
 heroku config:set OPENAI_API_KEY="your-api-key"
 git push heroku main
 heroku open
 ```
 
-Heroku uses the included `Procfile` and the `web` process binds to the platform-provided `PORT` automatically.
+Heroku uses the included `Procfile` and the `web` process binds to the platform-provided `PORT` automatically. The Apt buildpack must run before the Node buildpack so it can install the Chromium shared-library dependencies listed in `Aptfile`. New apps created from `app.json` configure both buildpacks automatically; existing apps need the `heroku buildpacks:add` command above followed by a redeploy.
 
 ## Tests
 
@@ -58,10 +59,13 @@ endpoints or attempt authentication/CAPTCHA bypasses.
 
 `npm install` installs Playwright's Chromium browser inside the application
 artifact (`PLAYWRIGHT_BROWSERS_PATH=0`), so it is available in deployed runtimes
-whose build-time home cache is not preserved. If dependencies are installed with
-scripts disabled, run `PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install chromium`
-before starting the server. Crexi matching deliberately refuses to run an
-unbounded search when the document has no extracted location.
+whose build-time home cache is not preserved. Chromium is not self-contained:
+the deployment host must also provide its native Linux libraries. On Heroku the
+Apt buildpack installs those libraries from `Aptfile`. If dependencies are
+installed with scripts disabled, run
+`PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install chromium` before starting the
+server. Crexi matching deliberately refuses to run an unbounded search when the
+document has no extracted location.
 
 ## AI extraction
 
