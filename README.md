@@ -43,7 +43,8 @@ matching extracted requirements to commercial listings.
 
 After a scan, LeaseLens saves a cleaned `document.searchLocation` (for example,
 `Rosenberg, TX`) alongside the extracted document location. When matching is
-requested, a Playwright browser opens the Crexi home page, finds the accessible
+requested, a Python process uses Playwright's synchronous API to launch a
+headless Chromium browser, opens the Crexi home page, finds the accessible
 location control at `#filter-location-input`, enters that search location, and
 submits it. It then reads
 structured result-card data, applies known price, cap-rate, area, status filters,
@@ -57,15 +58,14 @@ extracted market belongs. The adapter uses public HTML only, stops on
 access-control and rate-limit responses, and does not call private `/api`
 endpoints or attempt authentication/CAPTCHA bypasses.
 
-`npm install` installs Playwright's Chromium browser inside the application
-artifact (`PLAYWRIGHT_BROWSERS_PATH=0`), so it is available in deployed runtimes
-whose build-time home cache is not preserved. Chromium is not self-contained:
-the deployment host must also provide its native Linux libraries. On Heroku the
-Apt buildpack installs those libraries from `Aptfile`. If dependencies are
-installed with scripts disabled, run
-`PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install chromium` before starting the
-server. Crexi matching deliberately refuses to run an unbounded search when the
-document has no extracted location.
+`requirements.txt` pins Python Playwright to `>=1.54,<2`. The Heroku Python
+buildpack installs it and `bin/post_compile` installs bundled Chromium; the Apt
+buildpack supplies Chromium's native Linux libraries. Set
+`CHROMIUM_EXECUTABLE_PATH` to use an approved system/configured Chromium instead.
+The scraper captures rendered visible text, headings, links, native tables, and
+ARIA grids and supports a bounded breadth-first same-origin crawl. Crexi uses a
+single-page capture for each search/detail request. Matching deliberately
+refuses to run an unbounded search when the document has no extracted location.
 
 ## AI extraction
 

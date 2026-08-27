@@ -6,37 +6,20 @@ const { CrexiSource, LOCATION_SELECTOR, buildSearchUrl, cardSummaries, jsonLd, l
 const { evaluateProperty, formatSearchLocation, profileFromScan } = require('../src/property-matcher');
 
 test('opens Crexi and submits the formatted document location in its location field', async () => {
-  const actions = [];
-  const input = {
-    waitFor: async options => actions.push(['waitFor', options]),
-    fill: async value => actions.push(['fill', value]),
-    press: async key => actions.push(['press', key])
-  };
-  const page = {
-    goto: async (url, options) => actions.push(['goto', url, options]),
-    locator: selector => { actions.push(['locator', selector]); return input; },
-    waitForLoadState: async state => actions.push(['loadState', state]),
-    content: async () => '<a href="/properties/321/test-property">Test property</a>',
-    url: () => 'https://www.crexi.com/lease/properties'
-  };
-  const browser = { newPage: async () => page, close: async () => actions.push(['close']) };
-  const source = new CrexiSource({ browserFactory: async () => browser, delayMs: 0 });
+  const requests = [];
+  const source = new CrexiSource({ scrapeImpl: async request => {
+    requests.push(request);
+    return { pages: [{ html: '<a href="/properties/321/test-property">Test property</a>', capturedAt: '2026-08-27T00:00:00Z', url: 'https://www.crexi.com/lease/properties' }] };
+  }, delayMs: 0 });
 
   const result = await source.search({ transaction: 'lease', location: formatSearchLocation(' Location:  Rosenberg , TX. ') });
 
   assert.equal(result.summaries.length, 1);
-  assert.deepEqual(actions.slice(0, 5), [
-    ['goto', 'https://www.crexi.com', { waitUntil: 'domcontentloaded' }],
-    ['locator', LOCATION_SELECTOR],
-    ['waitFor', { state: 'visible' }],
-    ['fill', 'Rosenberg, TX'],
-    ['press', 'Enter']
-  ]);
-  assert.deepEqual(actions.at(-1), ['close']);
+  assert.deepEqual(requests, [{ url: 'https://www.crexi.com', location: 'Rosenberg, TX', locationSelector: LOCATION_SELECTOR, maxPages: 1 }]);
 });
 
 test('requires an extracted location rather than running an unbounded search', async () => {
-  const source = new CrexiSource({ browserFactory: async () => { throw new Error('should not launch'); } });
+  const source = new CrexiSource({ scrapeImpl: async () => { throw new Error('should not launch'); } });
   await assert.rejects(source.search({ location: '' }), /does not contain a location/);
   assert.equal(formatSearchLocation('Not specified'), '');
 });
@@ -45,7 +28,7 @@ test('discovers Crexi listing links and normalizes JSON-LD with evidence', async
   const searchHtml = '<a href="/properties/123/example-building">Example</a><a href="/properties/123/example-building?x=1">duplicate</a>';
   const detailHtml = `<script type="application/ld+json">${JSON.stringify({ '@type': 'RealEstateListing', name: 'Example Building', address: { streetAddress: '1 Main St', addressLocality: 'Houston', addressRegion: 'TX' }, floorSize: { value: '35,000 - 45,000 SF' }, description: 'Office space' })}</script>`;
   const fetchImpl = async url => ({ ok: true, status: 200, url, text: async () => url.includes('/properties/123/') ? detailHtml : searchHtml });
-  const source = new CrexiSource({ fetchImpl, searchUrlTemplate: 'https://www.crexi.com/properties?place={location}', delayMs: 0 });
+  const source = new CrexiSource({ fetchImpl, searchUrlTemplate: 'https://www.crexi.com/properties?place={location}', scrapeImpl: async ({ url }) => ({ pages: [{ html: detailHtml, url, capturedAt: '2026-08-27T00:00:00Z' }] }), delayMs: 0 });
   const properties = await source.find({ location: 'Houston, TX' });
   assert.equal(properties.length, 1);
   assert.equal(properties[0].canonicalId, 'crexi:123');

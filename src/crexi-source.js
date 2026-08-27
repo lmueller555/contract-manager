@@ -2,6 +2,7 @@
 
 const BASE_URL = 'https://www.crexi.com';
 const LOCATION_SELECTOR = '#filter-location-input';
+const { scrapeWithPlaywright } = require('./playwright-scraper');
 
 function decode(value = '') {
   return String(value).replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#x27;|&#39;/g, "'")
@@ -140,7 +141,7 @@ class CrexiSource {
   constructor(options = {}) {
     this.fetch = options.fetchImpl || globalThis.fetch; this.searchUrlTemplate = options.searchUrlTemplate || process.env.CREXI_SEARCH_URL_TEMPLATE;
     this.maxListings = options.maxListings || 25; this.delayMs = options.delayMs ?? 250;
-    this.browserFactory = options.browserFactory || defaultBrowserFactory;
+    this.scrape = options.scrapeImpl || scrapeWithPlaywright;
   }
 
   async get(url) {
@@ -161,24 +162,17 @@ class CrexiSource {
   }
 
   async searchWithBrowser(location) {
-    const browser = await this.browserFactory();
-    try {
-      const page = await browser.newPage();
-      await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
-      const input = page.locator(LOCATION_SELECTOR);
-      await input.waitFor({ state: 'visible' });
-      await input.fill(location);
-      await input.press('Enter');
-      await page.waitForLoadState('networkidle');
-      return { html: await page.content(), capturedAt: new Date().toISOString(), url: page.url() };
-    } finally {
-      await browser.close();
-    }
+    const result = await this.scrape({ url: BASE_URL, location, locationSelector: LOCATION_SELECTOR, maxPages: 1 });
+    if (!result.pages?.[0]) throw new Error('The Python Playwright scraper did not capture the Crexi results page.');
+    return result.pages[0];
   }
 
   async details(summary) {
     if (this.delayMs) await new Promise(resolve => setTimeout(resolve, this.delayMs));
-    const page = await this.get(summary.url); const records = jsonLd(page.html);
+    const result = await this.scrape({ url: summary.url, maxPages: 1 });
+    const page = result.pages?.[0];
+    if (!page) throw new Error(`The Python Playwright scraper did not capture ${summary.url}.`);
+    const records = jsonLd(page.html);
     const record = records.find(item => ['RealEstateListing', 'Place', 'Product', 'Offer'].includes(item['@type'])) || records.find(item => item.address || item.offers) || {};
     return { record, summary, rawFields: labeledFields(page.html), ...page };
   }
@@ -216,19 +210,6 @@ class CrexiSource {
     for (const summary of summaries) properties.push(this.normalize(await this.details(summary)));
     return properties;
   }
-}
-
-async function defaultBrowserFactory() {
-  // Keep the browser in node_modules so deployment platforms include it in the
-  // application artifact rather than dropping a build-time user cache.
-  process.env.PLAYWRIGHT_BROWSERS_PATH ||= '0';
-  let chromium;
-  try {
-    ({ chromium } = require('playwright'));
-  } catch {
-    throw new Error('Crexi browser search is unavailable because Playwright is not installed.');
-  }
-  return chromium.launch({ headless: true });
 }
 
 module.exports = { CrexiSource, LOCATION_SELECTOR, buildSearchUrl, cardSummaries, jsonLd, labeledFields, listingLinks, passesHardFilters };
